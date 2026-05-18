@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Netflix Trailers</title>
+  <style>
+    :root {
+      --netflix-red: #e50914;
+      --bg: #090909;
+      --panel: #151515;
+      --panel-2: #202020;
+      --text: #f5f5f5;
+      --muted: #b7b7b7;
+      --line: rgba(255, 255, 255, 0.12);
+      --shadow: 0 26px 80px rgba(0, 0, 0, 0.55);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background: var(--bg);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body.modal-open {
+      overflow: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .app {
+      min-height: 100vh;
+      background:
+        linear-gradient(180deg, rgba(0, 0, 0, 0.35), #090909 72vh),
+        radial-gradient(circle at top left, rgba(229, 9, 20, 0.22), transparent 32rem),
+        #090909;
+    }
+
+    .topbar {
+      position: fixed;
+      z-index: 20;
+      top: 0;
+      right: 0;
+      left: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.1rem clamp(1rem, 4vw, 3rem);
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.86), rgba(0, 0, 0, 0));
+    }
+
+    .brand {
+      color: var(--netflix-red);
+      font-size: clamp(1.6rem, 5vw, 2.55rem);
+      font-weight: 900;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: clamp(0.8rem, 2.5vw, 1.6rem);
+      color: #e4e4e4;
+      font-size: 0.95rem;
+      white-space: nowrap;
+    }
+
+    .nav a {
+      opacity: 0.86;
+    }
+
+    .nav a:hover,
+    .nav a:focus-visible {
+      opacity: 1;
+      color: white;
+    }
+
+    .profile {
+      width: 2.15rem;
+      height: 2.15rem;
+      border-radius: 4px;
+      background:
+        linear-gradient(135deg, #1652f0 0 49%, #111 50%),
+        #1652f0;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      flex: 0 0 auto;
+    }
+
+    .hero {
+      min-height: 78vh;
+      display: grid;
+      align-items: end;
+      padding: 7rem clamp(1rem, 4vw, 3rem) 3rem;
+      background:
+        linear-gradient(90deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 43%, rgba(0, 0, 0, 0.1) 100%),
+        linear-gradient(0deg, #090909 0%, transparent 31%),
+        url("https://img.youtube.com/vi/oqxAJKy0ii4/maxresdefault.jpg") center / cover no-repeat;
+    }
+
+    .hero-content {
+      width: min(46rem, 100%);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      margin-bottom: 1rem;
+      color: #fff;
+      font-size: 0.86rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .badge::before {
+      content: "";
+      width: 0.42rem;
+      height: 1.35rem;
+      border-radius: 1px;
+      background: var(--netflix-red);
+      display: inline-block;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 11ch;
+      font-size: clamp(3rem, 10vw, 6.6rem);
+      line-height: 0.9;
+      letter-spacing: 0;
+      text-transform: uppercase;
+      text-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.7);
+    }
+
+    .hero p {
+      max-width: 41rem;
+      margin: 1.2rem 0 1.5rem;
+      color: #ededed;
+      font-size: clamp(1rem, 2.3vw, 1.28rem);
+      line-height: 1.48;
+      text-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.75);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      align-items: center;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      min-height: 2.9rem;
+      padding: 0.75rem 1.15rem;
+      border: 0;
+      border-radius: 4px;
+      background: #fff;
+      color: #111;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 180ms ease, background 180ms ease;
+    }
+
+    .button:hover,
+    .button:focus-visible {
+      transform: translateY(-1px);
+      background: #e6e6e6;
+    }
+
+    .button.secondary {
+      background: rgba(109, 109, 110, 0.72);
+      color: white;
+    }
+
+    .button.secondary:hover,
+    .button.secondary:focus-visible {
+      background: rgba(109, 109, 110, 0.95);
+    }
+
+    .button svg {
+      width: 1.25rem;
+      height: 1.25rem;
+      fill: currentColor;
+    }
+
+    main {
+      padding: 0 clamp(1rem, 4vw, 3rem) 3rem;
+    }
+
+    .section {
+      margin-top: 1.9rem;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .section h2 {
+      margin: 0;
+      font-size: clamp(1.25rem, 3vw, 1.65rem);
+      letter-spacing: 0;
+    }
+
+    .count {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .rail {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(14rem, 1fr));
+      gap: 0.9rem;
+      overflow-x: auto;
+      overscroll-behavior-inline: contain;
+      scroll-snap-type: inline proximity;
+      padding: 0.2rem 0 1.25rem;
+      scrollbar-color: #555 transparent;
+    }
+
+    .card {
+      position: relative;
+      min-width: 14rem;
+      border-radius: 6px;
+      overflow: hidden;
+      background: var(--panel);
+      box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.2);
+      scroll-snap-align: start;
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .card:hover,
+    .card:focus-within {
+      transform: translateY(-0.28rem);
+      box-shadow: var(--shadow);
+    }
+
+    .card img {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      background: #222;
+    }
+
+    .card-body {
+      min-height: 6.4rem;
+      padding: 0.85rem;
+      background: linear-gradient(180deg, var(--panel-2), #111);
+    }
+
+    .card h3 {
+      margin: 0 0 0.45rem;
+      font-size: 1rem;
+      line-height: 1.25;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .play-chip {
+      position: absolute;
+      top: 0.7rem;
+      left: 0.7rem;
+      display: grid;
+      place-items: center;
+      width: 2.35rem;
+      height: 2.35rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.92);
+      color: #080808;
+      box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.4);
+    }
+
+    .play-chip svg {
+      width: 1rem;
+      height: 1rem;
+      margin-left: 0.12rem;
+      fill: currentColor;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(0.75rem, 3vw, 2rem);
+      background: rgba(0, 0, 0, 0.82);
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .player-shell {
+      width: min(72rem, 100%);
+      background: #050505;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .player-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.85rem 1rem;
+      background: #141414;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .player-title {
+      min-width: 0;
+      font-weight: 800;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .close {
+      display: grid;
+      place-items: center;
+      width: 2.35rem;
+      height: 2.35rem;
+      border: 0;
+      border-radius: 4px;
+      background: #2a2a2a;
+      color: #fff;
+      font-size: 1.5rem;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .close:hover,
+    .close:focus-visible {
+      background: var(--netflix-red);
+    }
+
+    .player {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+    }
+
+    .player iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .footer {
+      color: #858585;
+      font-size: 0.88rem;
+      padding: 2rem clamp(1rem, 4vw, 3rem);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    @media (max-width: 760px) {
+      .topbar {
+        align-items: flex-start;
+      }
+
+      .nav {
+        display: none;
+      }
+
+      .hero {
+        min-height: 70vh;
+        padding-top: 6rem;
+        background-position: center top;
+      }
+
+      .actions {
+        align-items: stretch;
+      }
+
+      .button {
+        flex: 1 1 10rem;
+      }
+
+      .rail {
+        grid-template-columns: repeat(12, minmax(12.5rem, 1fr));
+      }
+
+      .card {
+        min-width: 12.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar" aria-label="Site header">
+      <a class="brand" href="#home" aria-label="Netflix trailers home">Netflix</a>
+      <nav class="nav" aria-label="Main navigation">
+        <a href="#home">Home</a>
+        <a href="#trending">Trending</a>
+        <a href="#series">Series</a>
+        <a href="#movies">Movies</a>
+      </nav>
+      <div class="profile" aria-label="Profile"></div>
+    </header>
+
+    <section class="hero" id="home" aria-label="Featured trailer">
+      <div class="hero-content">
+        <div class="badge">Official trailer</div>
+        <h1>Squid Game</h1>
+        <p>Hundreds of players enter a mysterious survival contest for a life-changing cash prize. Watch the trailer without leaving this page.</p>
+        <div class="actions">
+          <a class="button js-play" href="https://www.youtube.com/watch?v=oqxAJKy0ii4" data-video="oqxAJKy0ii4" data-title="Squid Game | Official Trailer | Netflix">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg>
+            Play Trailer
+          </a>
+          <a class="button secondary" href="#trending">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 17h2v-6h-2v6Zm1-8.75a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4ZM12 2a10 10 0 1 0 .01 0H12Zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z"></path></svg>
+            More Titles
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <main>
+      <section class="section" id="trending" aria-labelledby="trending-title">
+        <div class="section-header">
+          <h2 id="trending-title">Trending Trailers</h2>
+          <span class="count">Click any title</span>
+        </div>
+        <div class="rail">
+          <a class="card js-play" href="https://www.youtube.com/watch?v=oqxAJKy0ii4" data-video="oqxAJKy0ii4" data-title="Squid Game | Official Trailer | Netflix">
+            <img src="https://img.youtube.com/vi/oqxAJKy0ii4/hqdefault.jpg" alt="Squid Game trailer thumbnail">
+            <span class="play-chip" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg></span>
+            <div class="card-body">
+              <h3>Squid Game</h3>
+              <div class="meta"><span>Series</span><span>•</span><span>Thriller</span><span>•</span><span>Netflix</span></div>
+            </div>
+          </a>
+
+          <a class="card js-play" href="https://www.youtube.com/watch?v=Q73UhUTs6y0" data-video="Q73UhUTs6y0" data-title="Wednesday | Official Trailer | Netflix">
+            <img src="https://img.youtube.com/vi/Q73UhUTs6y0/hqdefault.jpg" alt="Wednesday trailer thumbnail">
+            <span class="play-chip" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg></span>
+            <div class="card-body">
+              <h3>Wednesday</h3>
+              <div class="meta"><span>Series</span><span>•</span><span>Mystery</span><span>•</span><span>Netflix</span></div>
+            </div>
+          </a>
+
+          <a class="card js-play" href="https://www.youtube.com/watch?v=yQEondeGvKo" data-video="yQEondeGvKo" data-title="Stranger Things 4 | Official Trailer | Netflix">
+            <img src="https://img.youtube.com/vi/yQEondeGvKo/hqdefault.jpg" alt="Stranger Things trailer thumbnail">
+            <span class="play-chip" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg></span>
+            <div class="card-body">
+              <h3>Stranger Things 4</h3>
+              <div class="meta"><span>Series</span><span>•</span><span>Sci-Fi</span><span>•</span><span>Netflix</span></div>
+            </div>
+          </a>
+
+          <a class="card js-play" href="https://www.youtube.com/watch?v=Ades3pQbeh8" data-video="Ades3pQbeh8" data-title="ONE PIECE | Official Trailer | Netflix">
+            <img src="https://img.youtube.com/vi/Ades3pQbeh8/hqdefault.jpg" alt="ONE PIECE trailer thumbnail">
+            <span class="play-chip" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg></span>
+            <div class="card-body">
+              <h3>ONE PIECE</h3>
+              <div class="meta"><span>Series</span><span>•</span><span>Adventure</span><span>•</span><span>Netflix</span></div>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <section class="section" id="series" aria-labelledby="series-title">
+        <div class="section-header">
+          <h2 id="series-title">Popular Series</h2>
+          <span class="count">Embedded YouTube player</span>
+        </div>
+        <div class="rail">
+          <a class="card js-play" href="https://www.youtube.com/watch?v=ndl1W4ltcmg" data-video="ndl1W4ltcmg" data-title="The Witcher | Official Trailer | Netflix">
+            <img src="https://img.youtube.com/vi/ndl1W4ltcmg/hqdefault.jpg" alt="The Witcher trailer thumbnail">
+            <span class="play-chip" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg></span>
+            <div class="card-body">
+              <h3>The Witcher</h3>
+              <div class="meta"><span>Series</span><span>•</span><span>Fantasy</span><span>•</span><span>Netflix</span></div>
+            </div>
+          </a>
+
+          <a class="card js-play" href="https://www.youtube.com/watch?v=gpv7ayf_tyE" data-video="gpv7ayf_tyE" data-title="Bridgerton | Official Trailer | Netflix">
+            <img src="https://img.youtube.com/vi/gpv7ayf_tyE/hqdefault.jpg" alt="Bridgerton trailer thumbnail">
+            <span class="play-chip" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg></span>
+            <div class="card-body">
+              <h3>Bridgerton</h3>
+              <div class="meta"><span>Series</span><span>•</span><span>Drama</span><span>•</span><span>Netflix</span></div>
+            </div>
+          </a>
+
+          <a class="card js-play" href="https://www.youtube.com/watch?v=CDrieqwSdgI" data-video="CDrieqwSdgI" data-title="The Queen's Gambit | Official Trailer | Netflix">
+            <img src="https://img.youtube.com/vi/CDrieqwSdgI/hqdefault.jpg" alt="The Queen's Gambit trailer thumbnail">
+            <span class="play-chip" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg></span>
+            <div class="card-body">
+              <h3>The Queen's Gambit</h3>
+              <div class="meta"><span>Limited Series</span><span>•</span><span>Drama</span><span>•</span><span>Netflix</span></div>
+            </div>
+          </a>
+
+          <a class="card js-play" href="https://www.youtube.com/watch?v=ga0iTWXCGa0" data-video="ga0iTWXCGa0" data-title="Lupin | Official Trailer | Netflix">
+            <img src="https://img.youtube.com/vi/ga0iTWXCGa0/hqdefault.jpg" alt="Lupin trailer thumbnail">
+            <span class="play-chip" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg></span>
+            <div class="card-body">
+              <h3>Lupin</h3>
+              <div class="meta"><span>Series</span><span>•</span><span>Crime</span><span>•</span><span>Netflix</span></div>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <section class="section" id="movies" aria-labelledby="movies-title">
+        <div class="section-header">
+          <h2 id="movies-title">Movie Trailers</h2>
+          <span class="count">Stay on the site</span>
+        </div>
+        <div class="rail">
+          <a class="card js-play" href="https://www.youtube.com/watch?v=Pj0wz7zu3Ms" data-video="Pj0wz7zu3Ms" data-title="Red Notice | Official Trailer | Netflix">
+            <img src="https://img.youtube.com/vi/Pj0wz7zu3Ms/hqdefault.jpg" alt="Red Notice trailer thumbnail">
+            <span class="play-chip" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg></span>
+            <div class="card-body">
+              <h3>Red Notice</h3>
+              <div class="meta"><span>Movie</span><span>•</span><span>Action</span><span>•</span><span>Netflix</span></div>
+            </div>
+          </a>
+
+          <a class="card js-play" href="https://www.youtube.com/watch?v=Y274jZs5s7s" data-video="Y274jZs5s7s" data-title="Extraction 2 | Official Trailer | Netflix">
+            <img src="https://img.youtube.com/vi/Y274jZs5s7s/hqdefault.jpg" alt="Extraction 2 trailer thumbnail">
+            <span class="play-chip" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg></span>
+            <div class="card-body">
+              <h3>Extraction 2</h3>
+              <div class="meta"><span>Movie</span><span>•</span><span>Action</span><span>•</span><span>Netflix</span></div>
+            </div>
+          </a>
+
+          <a class="card js-play" href="https://www.youtube.com/watch?v=o2AsIXSh2xo" data-video="o2AsIXSh2xo" data-title="Bird Box | Official Trailer | Netflix">
+            <img src="https://img.youtube.com/vi/o2AsIXSh2xo/hqdefault.jpg" alt="Bird Box trailer thumbnail">
+            <span class="play-chip" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg></span>
+            <div class="card-body">
+              <h3>Bird Box</h3>
+              <div class="meta"><span>Movie</span><span>•</span><span>Thriller</span><span>•</span><span>Netflix</span></div>
+            </div>
+          </a>
+
+          <a class="card js-play" href="https://www.youtube.com/watch?v=ByAn8DF8Ykk" data-video="ByAn8DF8Ykk" data-title="Avatar: The Last Airbender | Official Trailer | Netflix">
+            <img src="https://img.youtube.com/vi/ByAn8DF8Ykk/hqdefault.jpg" alt="Avatar: The Last Airbender trailer thumbnail">
+            <span class="play-chip" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg></span>
+            <div class="card-body">
+              <h3>Avatar: The Last Airbender</h3>
+              <div class="meta"><span>Series</span><span>•</span><span>Fantasy</span><span>•</span><span>Netflix</span></div>
+            </div>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      Trailer links use YouTube embeds and open inside this page.
+    </footer>
+  </div>
+
+  <div class="modal" id="trailerModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="playerTitle">
+    <div class="player-shell">
+      <div class="player-top">
+        <div class="player-title" id="playerTitle">Trailer</div>
+        <button class="close" type="button" id="closePlayer" aria-label="Close trailer">&times;</button>
+      </div>
+      <div class="player" id="player"></div>
+    </div>
+  </div>
+
+  <script>
+    const modal = document.getElementById("trailerModal");
+    const player = document.getElementById("player");
+    const playerTitle = document.getElementById("playerTitle");
+    const closePlayer = document.getElementById("closePlayer");
+    const playLinks = document.querySelectorAll(".js-play");
+
+    function openTrailer(videoId, title) {
+      const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
+
+      playerTitle.textContent = title;
+      player.innerHTML = `<iframe src="${embedUrl}" title="${title}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+      modal.classList.add("active");
+      modal.setAttribute("aria-hidden", "false");
+      document.body.classList.add("modal-open");
+      closePlayer.focus();
+    }
+
+    function stopTrailer() {
+      modal.classList.remove("active");
+      modal.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("modal-open");
+      player.innerHTML = "";
+    }
+
+    playLinks.forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        openTrailer(link.dataset.video, link.dataset.title);
+      });
+    });
+
+    closePlayer.addEventListener("click", stopTrailer);
+
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) {
+        stopTrailer();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && modal.classList.contains("active")) {
+        stopTrailer();
+      }
+    });
+  </script>
+</body>
+</html>
+
